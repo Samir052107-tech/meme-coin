@@ -11,8 +11,8 @@ Features:
 Install:  pip install ccxt pandas
 Examples:
   python meme_bot.py --backtest
-  python meme_bot.py --symbol PEPE/USD --timeframe 1h --trailing 0.03 --take 0.06
-  python meme_bot.py --live --trailing 0.02 --take 0.04
+  python meme_bot.py --symbol PEPE/USD --timeframe 1h
+  python meme_bot.py --live
 
 Live keys (never hardcode them):
   export EXCHANGE_API_KEY="..."
@@ -43,8 +43,8 @@ def parse_args():
     p.add_argument("--risk", type=float, default=0.5, help="fraction of cash used per buy (0-1)")
     p.add_argument("--stop", type=float, default=0.05, help="stop-loss, 0.05 = 5%")
     p.add_argument("--fee", type=float, default=0.0026, help="fee per trade, 0.0026 = 0.26%")
-    p.add_argument("--trailing", type=float, default=0.0, help="trailing stop fraction, e.g. 0.03 for 3%% (0 to disable)")
-    p.add_argument("--take", type=float, default=0.0, help="take-profit fraction, e.g. 0.05 for 5%% (0 to disable)")
+    p.add_argument("--trailing", type=float, default=0.03, help="trailing stop fraction, e.g. 0.03 for 3%% (set 0 to disable)")
+    p.add_argument("--take", type=float, default=0.05, help="take-profit fraction, e.g. 0.05 for 5%% (set 0 to disable)")
 
     group = p.add_mutually_exclusive_group()
     group.add_argument("--backtest", action="store_true", help="run a backtest only")
