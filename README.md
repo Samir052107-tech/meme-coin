@@ -1,1 +1,1 @@
-# meme-coin
+# meme-coinj
