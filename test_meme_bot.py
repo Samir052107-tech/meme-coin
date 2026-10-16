@@ -1,0 +1,72 @@
+# test_meme_bot.py
+from types import SimpleNamespace
+import json
+import os
+
+import pandas as pd
+
+import meme_bot
+
+
+def test_cross_detects_buy_and_sell():
+    prev = SimpleNamespace(fast=10.0, slow=12.0)
+    cur_buy = SimpleNamespace(fast=13.0, slow=11.0)
+    cur_sell = SimpleNamespace(fast=11.0, slow=13.0)
+
+    assert meme_bot.cross(prev, cur_buy) == "buy"
+    assert meme_bot.cross(prev, cur_sell) == "sell"
+    assert meme_bot.cross(cur_buy, cur_buy) is None
+
+
+def test_position_save_and_load_round_trip(tmp_path, monkeypatch):
+    state_file = tmp_path / "bot_state.json"
+    monkeypatch.setattr(meme_bot, "STATE_FILE", str(state_file))
+
+    pos = meme_bot.Position(100.0, "DOGE/USD")
+    pos.qty = 2.5
+    pos.entry = 0.75
+    pos.max_price = 0.9
+    pos.stop_price = 0.68
+    pos.take_price = 1.05
+    pos.save(True, "DOGE/USD")
+
+    loaded = meme_bot.Position.load(100.0, True, "DOGE/USD")
+
+    assert loaded.cash == 100.0
+    assert loaded.qty == 2.5
+    assert loaded.entry == 0.75
+    assert loaded.max_price == 0.9
+    assert loaded.stop_price == 0.68
+    assert loaded.take_price == 1.05
+
+
+def test_backtest_runs_and_prints_summary(capsys):
+    # Synthetic OHLCV with a clear upward then downward move.
+    close = [100, 100, 100, 100, 100, 110, 115, 120, 118, 116, 112, 108, 105, 102, 100, 98, 96]
+    df = pd.DataFrame({
+        "ts": list(range(len(close))),
+        "open": close,
+        "high": [x + 1 for x in close],
+        "low": [x - 1 for x in close],
+        "close": close,
+        "vol": [10] * len(close),
+    })
+
+    a = SimpleNamespace(
+        fast=3,
+        slow=5,
+        cash=100.0,
+        risk=0.5,
+        stop=0.05,
+        fee=0.0026,
+        trailing=0.0,
+        take=0.0,
+        symbol="DOGE/USD",
+        timeframe="15m",
+    )
+
+    meme_bot.backtest(df, a)
+    out = capsys.readouterr().out
+    assert "Backtest DOGE/USD" in out
+    assert "Bot final:" in out
+    assert "Buy & hold:" in out
